@@ -1,0 +1,19 @@
+{
+  "name": "kome",
+  "version": "0.0.1",
+  "description": "Commit metadata and comments",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taskworld/kome.git"
+  },
+  "author": "Thai Pangsakulyanont <org.yi.dttvb@gmail.com> (http://dt.in.th/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/taskworld/kome/issues"
+  },
+  "homepage": "https://github.com/taskworld/kome#readme"
+}
