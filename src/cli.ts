@@ -206,7 +206,7 @@ async function updatePullRequestComment(
       log.info('Created comment %s', result.data.id)
     }
   } finally {
-    lock.release()
+    await lock.release()
   }
 }
 
