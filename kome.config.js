@@ -20,7 +20,7 @@ const config = ({
     app: {
       appId: env('GH_APP_ID'),
       privateKey: base64Decode(env('GH_APP_PRIVATE_KEY')),
-      installationId: base64Decode(env('GH_APP_INSTALLATION_ID')),
+      installationId: env('GH_APP_INSTALLATION_ID'),
     },
   },
   firebase: {
