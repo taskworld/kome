@@ -24,4 +24,4 @@ jobs:
             echo -n '99' > /tmp/commit-metadata/hello.world
       - run:
           name: CLI
-          command: yarn cli --commitMetadataPath=/tmp/commit-metadata
+          command: yarn cli --commitMetadataPath=/tmp/commit-metadata --pullRequest=$CIRCLE_PULL_REQUEST

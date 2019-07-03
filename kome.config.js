@@ -28,6 +28,11 @@ const config = ({
     databaseURL: 'https://kome-36c56.firebaseio.com',
     baseRef: '/kome/projects/kome',
   },
+  generateMessage: context => {
+    return ['```', require('util').inspect(context, { depth: 5 }), '```'].join(
+      '\n',
+    )
+  },
 })
 
 module.exports = config

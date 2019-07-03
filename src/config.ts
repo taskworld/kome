@@ -5,6 +5,7 @@ export type Config = {
     serviceAccount: any
     baseRef: string
   }
+  generateMessage: (context: CommentGenerationContext) => string
 }
 
 type GitHubAppConfig = {
@@ -17,4 +18,15 @@ type GitHubAppConfig = {
 
 type GitHubTokenConfig = {
   token: string
+}
+
+export type CommentGenerationContext = {
+  metadata: {
+    commit: { [key: string]: any }
+    pullRequest: { [key: string]: any }
+  }
+  sha: string
+  owner: string
+  repo: string
+  number: string
 }
