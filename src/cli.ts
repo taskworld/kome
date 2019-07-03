@@ -169,6 +169,7 @@ async function updatePullRequestComment(
     const hash = createHash('sha256')
       .update(text)
       .digest()
+      .toString('hex')
     const commentRef = await admin
       .database()
       .ref(`${config.firebase.baseRef}/comments/${number}`)
@@ -177,6 +178,11 @@ async function updatePullRequestComment(
 
     if (comment.child('commentId').exists()) {
       if (comment.child('hash').val() !== hash) {
+        log.info(
+          'Hash is changed (%s => %s)',
+          comment.child('hash').val(),
+          hash,
+        )
         const commentId = comment.child('commentId').val()
         await gh.issues.updateComment({
           owner,
@@ -185,6 +191,7 @@ async function updatePullRequestComment(
           body: text,
         })
         await commentRef.update({ hash: hash })
+        log.info('Updated comment')
       } else {
         log.info('Did not update the comment because its hash is unchanged')
       }
@@ -217,7 +224,7 @@ async function acquireLock(lockRef: admin.database.Reference) {
       }
     })
     if (acquireResult.committed) {
-      log.warn('Lock acquired!')
+      log.info('Lock acquired!')
       break
     } else {
       const maxAttempts = 10
