@@ -15,5 +15,20 @@
   "bugs": {
     "url": "https://github.com/taskworld/kome/issues"
   },
-  "homepage": "https://github.com/taskworld/kome#readme"
+  "homepage": "https://github.com/taskworld/kome#readme",
+  "dependencies": {
+    "@types/pino": "^5.8.8",
+    "cosmiconfig": "^5.2.1",
+    "execa": "^2.0.2",
+    "firebase-admin": "^8.2.0",
+    "glob": "^7.1.4",
+    "pino": "^5.12.6",
+    "pino-pretty": "^3.2.0",
+    "yargs": "^13.2.4"
+  },
+  "devDependencies": {
+    "prettier": "^1.18.2",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.2"
+  }
 }
