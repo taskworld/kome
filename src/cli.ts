@@ -1,5 +1,8 @@
 import yargs = require('yargs')
+import cosmiconfig from 'cosmiconfig'
 import rootLogger from './log'
+
+cosmiconfig('kome').searchSync()
 
 const log = rootLogger
 

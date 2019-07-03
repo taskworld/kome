@@ -23,6 +23,7 @@
   "dependencies": {
     "@octokit/app": "^3.0.1",
     "@octokit/rest": "^16.28.2",
+    "@types/cosmiconfig": "^5.0.3",
     "@types/invariant": "^2.2.30",
     "@types/pino": "^5.8.8",
     "@types/yargs": "^13.0.0",
