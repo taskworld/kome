@@ -28,6 +28,9 @@ const config = ({
     databaseURL: 'https://kome-36c56.firebaseio.com',
     baseRef: '/kome/projects/kome',
   },
+  generateMessage: context => {
+    return 'Meow!'
+  },
 })
 
 module.exports = config

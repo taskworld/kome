@@ -7,6 +7,12 @@ import cosmiconfig from 'cosmiconfig'
 import rootLogger from './log'
 import { join } from 'path'
 import { readFileSync } from 'fs'
+import { CommentGenerationContext } from './config'
+import Octokit from '@octokit/rest'
+import { App } from '@octokit/app'
+import uuid = require('uuid')
+import delay from 'delay'
+import { createHash } from 'crypto'
 
 const { config } =
   cosmiconfig('kome').searchSync() ||
@@ -72,11 +78,13 @@ yargs
         )
       }
 
-      if (args.pull) {
+      if (args.pullRequest) {
+        const { owner, repo, number } = parsePullRequestUrl(args.pullRequest)
         log.info('Updating pull request comment.')
+        await updatePullRequestComment(owner, repo, number, sha)
       } else {
         log.info(
-          'Skipping pull request comment update because `--pull` is not provided.',
+          'Skipping pull request comment update because `--pullRequest` is not provided.',
         )
       }
       process.exit(0)
@@ -123,5 +131,141 @@ function parsePullRequestUrl(
     owner: m[1],
     repo: m[2],
     number: m[3],
+  }
+}
+
+async function updatePullRequestComment(
+  owner: string,
+  repo: string,
+  number: string,
+  sha: string,
+) {
+  // Acquire lock:
+  const lock = await acquireLock(
+    admin.database().ref(`${config.firebase.baseRef}/comments/${number}/lock`),
+  )
+  if (!lock) return
+  try {
+    const getFirebaseData = async (path: string): Promise<any> =>
+      (await admin
+        .database()
+        .ref(`${config.firebase.baseRef}/${path}`)
+        .once('value')).val() || {}
+    const commitMetadataPromise = getFirebaseData(`commits/${sha}`)
+    const pullRequestMetadataPromise = getFirebaseData(`pulls/${number}`)
+
+    const context: CommentGenerationContext = {
+      metadata: {
+        commit: await commitMetadataPromise,
+        pullRequest: await pullRequestMetadataPromise,
+      },
+      sha,
+      owner,
+      repo,
+      number,
+    }
+
+    const text = config.generateMessage(context)
+    const hash = createHash('sha256')
+      .update(text)
+      .digest()
+    const commentRef = await admin
+      .database()
+      .ref(`${config.firebase.baseRef}/comments/${number}`)
+    const comment = await commentRef.once('value')
+    const gh = await getGitHubClient()
+
+    if (comment.child('commentId').exists()) {
+      if (comment.child('hash').val() !== hash) {
+        const commentId = comment.child('commentId').val()
+        await gh.issues.updateComment({
+          owner,
+          repo,
+          comment_id: commentId,
+          body: text,
+        })
+        await commentRef.update({ hash: hash })
+      } else {
+        log.info('Did not update the comment because its hash is unchanged')
+      }
+    } else {
+      const result = await gh.issues.createComment({
+        owner,
+        repo,
+        issue_number: +number,
+        body: text,
+      })
+      await commentRef.update({ commentId: result.data.id, hash: hash })
+      log.info('Created comment %s', result.data.id)
+    }
+  } finally {
+    lock.release()
+  }
+}
+
+async function acquireLock(lockRef: admin.database.Reference) {
+  const processId = uuid.v4()
+  for (let i = 1; ; i++) {
+    const acquireResult = await lockRef.transaction(data => {
+      if (data && data.acquiredAt >= Date.now() - 10e3) {
+        return undefined
+      } else {
+        return {
+          owner: processId,
+          acquiredAt: admin.database.ServerValue.TIMESTAMP,
+        }
+      }
+    })
+    if (acquireResult.committed) {
+      log.warn('Lock acquired!')
+      break
+    } else {
+      const maxAttempts = 10
+      if (i >= maxAttempts) {
+        log.warn('Giving up acquiring lock after %s attempts.', maxAttempts)
+        return null
+      } else {
+        log.warn('Resource locked. Waiting...')
+        await delay(5e3)
+      }
+    }
+  }
+  return {
+    async release() {
+      await lockRef.transaction(data => {
+        if (data && data.owner === processId) {
+          return null
+        } else {
+          return undefined
+        }
+      })
+    },
+  }
+}
+
+async function getGitHubClient() {
+  if (config.github.token) {
+    return new Octokit({
+      auth: config.github.token,
+    })
+  } else {
+    const app = new App({
+      id:
+        config.github.app.appId ||
+        invariant(false, 'Missing `github.app.appId` in config.'),
+      privateKey:
+        config.github.app.privateKey ||
+        invariant(false, 'Missing `github.app.privateKey` in config.'),
+    })
+    return new Octokit({
+      async auth() {
+        const installationAccessToken = await app.getInstallationAccessToken({
+          installationId:
+            config.github.app.installationId ||
+            invariant(false, 'Missing `github.app.installationId` in config.'),
+        })
+        return `token ${installationAccessToken}`
+      },
+    })
   }
 }
