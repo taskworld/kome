@@ -25,6 +25,7 @@
     "@octokit/rest": "^16.28.2",
     "@types/invariant": "^2.2.30",
     "@types/pino": "^5.8.8",
+    "@types/yargs": "^13.0.0",
     "cosmiconfig": "^5.2.1",
     "execa": "^2.0.2",
     "firebase-admin": "^8.2.0",
