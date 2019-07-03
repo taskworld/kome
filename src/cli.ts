@@ -1,6 +1,9 @@
 import yargs = require('yargs')
+import glob = require('glob')
 import cosmiconfig from 'cosmiconfig'
 import rootLogger from './log'
+import { join } from 'path'
+import { readFileSync } from 'fs'
 
 cosmiconfig('kome').searchSync()
 
@@ -11,7 +14,7 @@ yargs
     '$0',
     'Scans the commit metadata and create/update the commit comment',
     {
-      path: {
+      commitMetadataPath: {
         desc: 'Path to a directory with commit metadata to write.',
         type: 'string',
       },
@@ -22,11 +25,13 @@ yargs
       },
     },
     async args => {
-      if (args.path) {
+      if (args.commitMetadataPath) {
         log.info('Collecting metadata.')
+        const commitMetadata = await collectMetadata(args.commitMetadataPath)
+        log.info(commitMetadata, 'Collected metadata:')
       } else {
         log.info(
-          'Skipping metadata collection because `--path` is not provided.',
+          'Skipping commit metadata collection because `--commitMetadataPath` is not provided.',
         )
       }
       if (args.pull) {
@@ -42,3 +47,18 @@ yargs
   .help()
   .strict()
   .parse()
+
+async function collectMetadata(basePath: string) {
+  const out: any = {}
+  const files = glob.sync('*', { cwd: basePath })
+  for (const file of files) {
+    const filePath = join(basePath, file)
+    const fileContents = readFileSync(filePath, 'utf8')
+    if (file.endsWith('.json')) {
+      out[file.slice(0, -5)] = JSON.parse(fileContents)
+    } else {
+      out[file] = fileContents
+    }
+  }
+  return out
+}

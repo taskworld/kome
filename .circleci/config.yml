@@ -15,5 +15,13 @@ jobs:
           paths:
             - ~/.cache/yarn
       - run:
+          name: Prepare commit metadata
+          command: |
+            mkdir -p /tmp/commit-metadata
+            echo -n "$(date)" > /tmp/commit-metadata/lastBuilt
+            echo -n '{"works":true}' > /tmp/commit-metadata/jsonInfo.json
+            echo -n '{"works":true}' > /tmp/commit-metadata/nested.json.info.json
+            echo -n '99' > /tmp/commit-metadata/hello.world
+      - run:
           name: CLI
-          command: yarn cli
+          command: yarn cli --commitMetadataPath=/tmp/commit-metadata
