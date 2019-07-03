@@ -1,11 +1,21 @@
 import yargs = require('yargs')
 import glob = require('glob')
+import execa = require('execa')
+import invariant from 'invariant'
+import * as admin from 'firebase-admin'
 import cosmiconfig from 'cosmiconfig'
 import rootLogger from './log'
 import { join } from 'path'
 import { readFileSync } from 'fs'
 
-cosmiconfig('kome').searchSync()
+const { config } =
+  cosmiconfig('kome').searchSync() ||
+  invariant(false, 'Config file (kome.config.js) is expected.')
+
+admin.initializeApp({
+  credential: admin.credential.cert(config.firebase.serviceAccount),
+  databaseURL: config.firebase.databaseURL,
+})
 
 const log = rootLogger
 
@@ -25,10 +35,12 @@ yargs
       },
     },
     async args => {
+      const sha = execa.sync('git', ['rev-parse', 'HEAD']).stdout.trim()
       if (args.commitMetadataPath) {
-        log.info('Collecting metadata.')
+        log.info('Collecting metadata for commit %s.', sha)
         const commitMetadata = await collectMetadata(args.commitMetadataPath)
         log.info(commitMetadata, 'Collected metadata:')
+        await writeMetadata(`commits/${sha}`, commitMetadata)
       } else {
         log.info(
           'Skipping commit metadata collection because `--commitMetadataPath` is not provided.',
@@ -61,4 +73,11 @@ async function collectMetadata(basePath: string) {
     }
   }
   return out
+}
+
+async function writeMetadata(path: string, collectedMetadata: any) {
+  await admin
+    .database()
+    .ref(`${config.firebase.baseRef}/${path}`)
+    .update(collectMetadata)
 }
