@@ -53,6 +53,7 @@ yargs
           'Skipping pull request comment update because `--pull` is not provided.',
         )
       }
+      process.exit(0)
     },
   )
   .demandCommand()
@@ -63,13 +64,14 @@ yargs
 async function collectMetadata(basePath: string) {
   const out: any = {}
   const files = glob.sync('*', { cwd: basePath })
+  const keyify = (name: string) => name.split('.').join('/')
   for (const file of files) {
     const filePath = join(basePath, file)
     const fileContents = readFileSync(filePath, 'utf8')
     if (file.endsWith('.json')) {
-      out[file.slice(0, -5)] = JSON.parse(fileContents)
+      out[keyify(file.slice(0, -5))] = JSON.parse(fileContents)
     } else {
-      out[file] = fileContents
+      out[keyify(file)] = fileContents
     }
   }
   return out
