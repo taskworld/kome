@@ -29,7 +29,9 @@ const config = ({
     baseRef: '/kome/projects/kome',
   },
   generateMessage: context => {
-    return 'Meow!'
+    return ['```', require('util').inspect(context, { depth: 5 }), '```'].join(
+      '\n',
+    )
   },
 })
 
