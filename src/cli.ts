@@ -28,7 +28,11 @@ yargs
         desc: 'Path to a directory with commit metadata to write.',
         type: 'string',
       },
-      pull: {
+      pullRequestMetadataPath: {
+        desc: 'Path to a directory with pull request metadata to write.',
+        type: 'string',
+      },
+      pullRequest: {
         desc:
           'URL to the pull request. Needed for creating a comment and for updating pull request metadata.',
         type: 'string',
@@ -36,6 +40,7 @@ yargs
     },
     async args => {
       const sha = execa.sync('git', ['rev-parse', 'HEAD']).stdout.trim()
+
       if (args.commitMetadataPath) {
         log.info('Collecting metadata for commit %s.', sha)
         const commitMetadata = await collectMetadata(args.commitMetadataPath)
@@ -46,6 +51,27 @@ yargs
           'Skipping commit metadata collection because `--commitMetadataPath` is not provided.',
         )
       }
+
+      if (args.pullRequestMetadataPath) {
+        if (args.pullRequest) {
+          const { number } = parsePullRequestUrl(args.pullRequest)
+          log.info('Collecting metadata for commit %s.', sha)
+          const pullRequestMetadata = await collectMetadata(
+            args.pullRequestMetadataPath,
+          )
+          log.info(pullRequestMetadata, 'Collected metadata:')
+          await writeMetadata(`pulls/${number}`, pullRequestMetadata)
+        } else {
+          log.info(
+            'Skipping pull request metadata collection because `--pullRequest` is not provided.',
+          )
+        }
+      } else {
+        log.info(
+          'Skipping pull request metadata collection because `--pullRequestMetadataPath` is not provided.',
+        )
+      }
+
       if (args.pull) {
         log.info('Updating pull request comment.')
       } else {
@@ -82,4 +108,20 @@ async function writeMetadata(path: string, collectedMetadata: any) {
     .database()
     .ref(`${config.firebase.baseRef}/${path}`)
     .update(collectedMetadata)
+}
+
+function parsePullRequestUrl(
+  url: string,
+): {
+  owner: string
+  repo: string
+  number: string
+} {
+  const m = /([^/]+)\/([^/]+)\/pull\/(\d+)/.exec(url)
+  if (!m) return invariant(false, 'Invalid pull request URL: %s', url)
+  return {
+    owner: m[1],
+    repo: m[2],
+    number: m[3],
+  }
 }
