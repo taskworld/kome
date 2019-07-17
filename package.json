@@ -7,7 +7,11 @@
     "src",
     "lib"
   ],
+  "bin": {
+    "kome": "./lib/cli"
+  },
   "scripts": {
+    "prepare": "rm -rf lib && tsc",
     "cli": "ts-node src/cli"
   },
   "repository": {
