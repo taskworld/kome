@@ -8,7 +8,7 @@
     "lib"
   ],
   "bin": {
-    "kome": "./lib/cli"
+    "kome": "./lib/cli.js"
   },
   "scripts": {
     "prepare": "rm -rf lib && tsc",
