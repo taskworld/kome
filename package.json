@@ -5,10 +5,11 @@
   "main": "index.js",
   "files": [
     "src",
-    "lib"
+    "lib",
+    "bin"
   ],
   "bin": {
-    "kome": "./lib/cli.js"
+    "kome": "./bin/kome"
   },
   "scripts": {
     "prepare": "rm -rf lib && tsc",
