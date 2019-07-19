@@ -43,9 +43,15 @@ yargs
           'URL to the pull request. Needed for creating a comment and for updating pull request metadata.',
         type: 'string',
       },
+      sha: {
+        desc:
+          'Full commit SHA. If not specified, will default to $(git rev-parse HEAD).',
+        type: 'string',
+      },
     },
     async args => {
-      const sha = execa.sync('git', ['rev-parse', 'HEAD']).stdout.trim()
+      const sha =
+        args.sha || execa.sync('git', ['rev-parse', 'HEAD']).stdout.trim()
 
       if (args.commitMetadataPath) {
         log.info('Collecting metadata for commit %s.', sha)
