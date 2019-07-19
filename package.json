@@ -1,6 +1,6 @@
 {
   "name": "kome",
-  "version": "0.1.0",
+  "version": "0.2.0-1",
   "description": "Commit metadata and comments",
   "main": "index.js",
   "files": [
