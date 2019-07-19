@@ -1,4 +1,7 @@
 // @ts-check
+if (require('fs').existsSync('.env')) {
+  require('dotenv').config()
+}
 
 const invariant = require('invariant')
 
