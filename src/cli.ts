@@ -90,6 +90,22 @@ yargs
       process.exit(0)
     },
   )
+  .command(
+    'read <path>',
+    'Read metadata',
+    {
+      path: {
+        type: 'string',
+        desc: 'Specify "commits/<sha>" or "pulls/<number>"',
+        demand: true,
+      },
+    },
+    async args => {
+      log.info('Reading data from %s', args.path)
+      console.log(JSON.stringify(await readMetadata(args.path), null, 2))
+      process.exit(0)
+    },
+  )
   .demandCommand()
   .help()
   .strict()
@@ -116,6 +132,14 @@ async function writeMetadata(path: string, collectedMetadata: any) {
     .database()
     .ref(`${config.firebase.baseRef}/${path}`)
     .update(collectedMetadata)
+}
+
+async function readMetadata(path: string) {
+  const snapshot = await admin
+    .database()
+    .ref(`${config.firebase.baseRef}/${path}`)
+    .once('value')
+  return snapshot.val() || {}
 }
 
 function parsePullRequestUrl(
@@ -146,13 +170,8 @@ async function updatePullRequestComment(
   )
   if (!lock) return
   try {
-    const getFirebaseData = async (path: string): Promise<any> =>
-      (await admin
-        .database()
-        .ref(`${config.firebase.baseRef}/${path}`)
-        .once('value')).val() || {}
-    const commitMetadataPromise = getFirebaseData(`commits/${sha}`)
-    const pullRequestMetadataPromise = getFirebaseData(`pulls/${number}`)
+    const commitMetadataPromise = readMetadata(`commits/${sha}`)
+    const pullRequestMetadataPromise = readMetadata(`pulls/${number}`)
 
     const context: CommentGenerationContext = {
       metadata: {
