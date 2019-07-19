@@ -148,7 +148,7 @@ async function readMetadata(path: string) {
     .database()
     .ref(`${config.firebase.baseRef}/${path}`)
     .once('value')
-  return snapshot.val() || {}
+  return snapshot.val() || null
 }
 
 function parsePullRequestUrl(
@@ -184,8 +184,8 @@ async function updatePullRequestComment(
 
     const context: CommentGenerationContext = {
       metadata: {
-        commit: await commitMetadataPromise,
-        pullRequest: await pullRequestMetadataPromise,
+        commit: (await commitMetadataPromise) || {},
+        pullRequest: (await pullRequestMetadataPromise) || {},
       },
       sha,
       owner,
