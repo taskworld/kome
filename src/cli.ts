@@ -137,7 +137,10 @@ async function writeMetadata(path: string, collectedMetadata: any) {
   await admin
     .database()
     .ref(`${config.firebase.baseRef}/${path}`)
-    .update(collectedMetadata)
+    .update({
+      updatedAt: admin.database.ServerValue.TIMESTAMP,
+      ...collectedMetadata,
+    })
 }
 
 async function readMetadata(path: string) {
